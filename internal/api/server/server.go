@@ -3,45 +3,39 @@ package server
 import (
 	"net/http"
 
-	"github.com/mxpadidar/letsgo/internal/api/handlers"
-	"github.com/mxpadidar/letsgo/internal/core/services"
+	"github.com/mxpadidar/letsgo/internal/api/middlewares"
+	"github.com/mxpadidar/letsgo/internal/api/routers"
+	"github.com/mxpadidar/letsgo/internal/core/specs"
 	"github.com/mxpadidar/letsgo/internal/core/stores"
 )
 
 type Server struct {
-	addr        string
-	router      *http.ServeMux
-	userStore   stores.UserStore
-	hashService services.HashService
+	mux             *http.ServeMux
+	addr            string
+	tokenService    specs.TokenService
+	passwordService specs.PasswordService
+	userStore       stores.UserStore
+	mw              middlewares.Middleware
 }
 
-func NewServer(addr string, userStore stores.UserStore, hashService services.HashService) *Server {
-	router := http.NewServeMux()
+func NewServer(addr string, tokenService specs.TokenService, passwordService specs.PasswordService, userStore stores.UserStore, mw middlewares.Middleware) *Server {
 	return &Server{
-		addr:        addr,
-		userStore:   userStore,
-		hashService: hashService,
-		router:      router,
+		mux:             http.NewServeMux(),
+		addr:            addr,
+		tokenService:    tokenService,
+		passwordService: passwordService,
+		userStore:       userStore,
+		mw:              mw,
 	}
-
 }
 
-func (s *Server) SetupHandlers() {
-	s.router.Handle("/health", http.HandlerFunc(s.healthCheck))
-
-	auth := handlers.NewAuthHandler(
-		s.router,
-		s.userStore,
-		s.hashService,
-	)
-
-	auth.SetupRoutes()
+func (s *Server) Setup() {
+	auth := routers.NewAuthRouter(s.mux, s.userStore, s.tokenService, s.passwordService)
+	auth.RegisterRoutes()
+	users := routers.NewUsersRouter(s.mux, s.userStore, s.passwordService)
+	users.RegisterRoutes()
 }
 
 func (s *Server) Start() error {
-	return http.ListenAndServe(s.addr, s.router)
-}
-
-func (s *Server) healthCheck(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
+	return http.ListenAndServe(s.addr, s.mw(s.mux))
 }

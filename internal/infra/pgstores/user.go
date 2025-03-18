@@ -17,15 +17,30 @@ func NewUserPgStore(db *sqlx.DB) *UserPgStore {
 	return &UserPgStore{db}
 }
 
+func (store UserPgStore) FindById(ctx context.Context, id int) (*entities.User, error) {
+	var user entities.User
+
+	query := "SELECT * FROM accounts.users WHERE id = $1"
+
+	err := store.db.GetContext(ctx, &user, query, id)
+	if err == sql.ErrNoRows {
+		return nil, types.ErrResourceNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (store UserPgStore) FindByUsername(ctx context.Context, username string) (*entities.User, error) {
 	var user entities.User
 
-	query := `SELECT id, username, hash_password, fname, lname, is_admin, created_at
-              FROM accounts.users WHERE username = $1`
+	query := "SELECT * FROM accounts.users WHERE username = $1"
 
 	err := store.db.GetContext(ctx, &user, query, username)
 	if err == sql.ErrNoRows {
-		return nil, types.ErrNotFound
+		return nil, types.ErrResourceNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -36,9 +51,9 @@ func (store UserPgStore) FindByUsername(ctx context.Context, username string) (*
 
 func (store UserPgStore) Save(ctx context.Context, user *entities.User) error {
 	query := `INSERT INTO accounts.users
-    (username, hash_password, fname, lname, is_admin, created_at)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING id`
+		(username, hash_password, fname, lname, is_admin, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id`
 
 	row := store.db.QueryRowxContext(
 		ctx,

@@ -9,12 +9,12 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
-	"github.com/mxpadidar/letsgo/pkg/conf"
+	"github.com/mxpadidar/letsgo/internal/infra/conf"
 )
 
 func main() {
 	configs := conf.NewConf()
-	db, err := sql.Open("postgres", configs.PgConnStr())
+	db, err := sql.Open("postgres", configs.PgDSN())
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -9,8 +9,8 @@ type PostgresDb struct {
 	Db *sqlx.DB
 }
 
-func NewPgDb(connStr string) (*PostgresDb, error) {
-	db, err := sqlx.Connect("postgres", connStr)
+func NewPgDb(dsn string) (*PostgresDb, error) {
+	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}

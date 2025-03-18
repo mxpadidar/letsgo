@@ -2,10 +2,14 @@ package types
 
 import "errors"
 
-var ErrNotFound = errors.New("not found")
+type DomainError error
 
-var ErrInvalidCredentials = errors.New("invalid credentials")
-
-var ErrConflict = errors.New("conflict")
-
-var ErrValidation = errors.New("validation error")
+var (
+	ErrResourceNotFound      DomainError = errors.New("resource not found")
+	ErrResourceAlreadyExists DomainError = errors.New("resource already exists")
+	ErrConflict              DomainError = errors.New("conflict")
+	ErrValidation            DomainError = errors.New("validation error")
+	ErrForbidden             DomainError = errors.New("forbidden")
+	ErrUnauthorized          DomainError = errors.New("unauthorized")
+	ErrInternal              DomainError = errors.New("internal error")
+)

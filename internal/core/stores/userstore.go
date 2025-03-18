@@ -8,5 +8,6 @@ import (
 
 type UserStore interface {
 	FindByUsername(ctx context.Context, username string) (*entities.User, error)
+	FindById(ctx context.Context, id int) (*entities.User, error)
 	Save(ctx context.Context, user *entities.User) error
 }
