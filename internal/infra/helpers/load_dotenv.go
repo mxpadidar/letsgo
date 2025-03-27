@@ -8,7 +8,7 @@ import (
 func LoadEnvFile() error {
 	err := godotenv.Load()
 	if err != nil {
-		return errors.NewServerErr("Failed to load .env file", "LoadEnvFile", err)
+		return errors.NewErr(errors.ErrValidation, "Failed to load .env file", err)
 	}
 	return nil
 }

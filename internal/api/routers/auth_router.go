@@ -3,32 +3,38 @@ package routers
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/mxpadidar/letsgo/internal/api/response"
+	"github.com/mxpadidar/letsgo/internal/domain/commands"
+	"github.com/mxpadidar/letsgo/internal/domain/errors"
+	"github.com/mxpadidar/letsgo/internal/domain/stores"
 )
 
 type AuthRouter struct {
-	mux *http.ServeMux
+	mux       *http.ServeMux
+	userStore stores.UserStore
 }
 
-func NewAuthRouter(mux *http.ServeMux) *AuthRouter {
-	return &AuthRouter{
-		mux: mux,
-	}
+func NewAuthRouter(mux *http.ServeMux, userStore stores.UserStore) *AuthRouter {
+	return &AuthRouter{mux: mux, userStore: userStore}
 }
 
-func (ar *AuthRouter) Load() {
-	ar.mux.HandleFunc("POST /auth/register", ar.registerUser)
+func (router *AuthRouter) Load() {
+	router.mux.HandleFunc("POST /auth/signup", router.signup)
 }
 
-func (ar *AuthRouter) registerUser(w http.ResponseWriter, r *http.Request) {
-	// Set content type header first
-	w.Header().Set("Content-Type", "application/json")
-
-	// Set status code
-	w.WriteHeader(http.StatusOK)
-
-	// Write response
-	if err := json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"}); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+func (router *AuthRouter) signup(w http.ResponseWriter, r *http.Request) {
+	cmd := &commands.SignupCmd{}
+	if err := json.NewDecoder(r.Body).Decode(cmd); err != nil {
+		response.WriteError(w, errors.NewErr(errors.ErrValidation, "invalid request body", err))
 		return
 	}
+
+	user, err := cmd.Execute(r.Context(), router.userStore)
+	if err != nil {
+		response.WriteError(w, err)
+		return
+	}
+
+	response.WriteOk(w, "signup successful", user, http.StatusCreated)
 }

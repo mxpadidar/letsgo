@@ -21,7 +21,7 @@ func NewServer(userStore stores.UserStore) *Server {
 }
 
 func (s *Server) Start(addr string) error {
-	auth := routers.NewAuthRouter(s.mux)
+	auth := routers.NewAuthRouter(s.mux, s.UserStore)
 	auth.Load()
 	log.Printf("Starting server on %s", addr)
 	return http.ListenAndServe(addr, s.mux)
