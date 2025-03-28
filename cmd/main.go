@@ -9,6 +9,7 @@ import (
 	"github.com/mxpadidar/letsgo/internal/infra/configs"
 	"github.com/mxpadidar/letsgo/internal/infra/dbstore"
 	"github.com/mxpadidar/letsgo/internal/infra/helpers"
+	"github.com/mxpadidar/letsgo/internal/infra/services"
 )
 
 func main() {
@@ -17,14 +18,16 @@ func main() {
 	}
 
 	configs := configs.InitConfigs()
-	db := sqlx.MustConnect("postgres", configs.POSTGRES_DSN)
+	db := sqlx.MustConnect("postgres", configs.PostgresDSN)
 	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
 
 	userStore := dbstore.NewUserDBStore(db)
+	jwtService := services.NewJwtService([]byte(configs.JWTSecret), configs.AccessTokenTTL)
+	bcryptService := services.NewBcryptService(configs.BcryptCost)
 
-	server := server.NewServer(userStore)
+	server := server.NewServer(userStore, jwtService, bcryptService)
 
 	server.Start(":8000")
 }
