@@ -15,6 +15,7 @@ The project uses a postgres container managed via `Podman`. If you prefer using 
 - [Go](https://go.dev/doc/install) (version `1.22` or higher)
 - [Podman](https://podman.io/docs/installation) (for running the PostgreSQL container)
 - [Goose](https://pressly.github.io/goose/installation/) (for managing database migrations)
+- [Air](https://github.com/cosmtrek/air) (for live reloading)
 
 ## Installation
 

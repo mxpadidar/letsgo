@@ -37,11 +37,5 @@ migrate-up:
 migrate-down:
 	@goose -dir migrations postgres $(POSTGRES_URL) down
 
-setup:
-	@go mod tidy
-	@make pgstart
-	@cp .env.example .env
-	@make migrate-up
-
 run:
-	@go run cmd/main.go
+	@air --build.cmd "go build -o ./.tmp/main cmd/main.go" --build.bin "./.tmp/main" --log.silent="true" --tmp_dir=".tmp"

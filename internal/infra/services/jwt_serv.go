@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -54,9 +56,14 @@ func (jwtServ *JwtService) Decode(ctx context.Context, tokenString string) (payl
 	}
 
 	if claims, ok := tokenClaims.Claims.(jwt.MapClaims); ok && tokenClaims.Valid {
-		userID := claims["sub"].(int)
-		payload = dtos.NewTokenPayload(userID)
-		return payload, nil
+		// Safer approach with error handling
+		if sub, ok := claims["sub"].(float64); ok {
+			log.Printf("sub: %v", sub)
+			userID := int(sub)
+			payload = dtos.NewTokenPayload(userID)
+			return payload, nil
+		}
+		return nil, fmt.Errorf("invalid claim type for 'sub'")
 	}
 
 	return nil, errors.NewErr(errors.ErrAuthFailed, "invalid token", nil)
