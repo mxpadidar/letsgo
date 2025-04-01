@@ -6,10 +6,10 @@ import (
 	"github.com/mxpadidar/letsgo/internal/domain/errors"
 )
 
-func MinMaxValidation(key, val string, min, max int) *errors.Err {
+func MinMaxValidation(key, val string, min, max int) error {
 	if len(val) < min || len(val) > max {
-		msg := fmt.Sprintf("%s must be between %d and %d characters long", key, min, max)
-		return errors.NewErr(errors.ErrValidation, msg, nil)
+		errMsg := fmt.Sprintf("%s must be between %d and %d characters long", key, min, max)
+		return errors.NewValidationError(errMsg)
 	}
 	return nil
 }

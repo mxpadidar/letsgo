@@ -9,7 +9,11 @@ POSTGRES_VOLUME = .tmp/pgdata
 POSTGRES_IMAGE = docker.io/library/postgres:17-bookworm
 POSTGRES_URL = "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable"
 
-pgstart:
+pgstop:
+	@podman stop "$(POSTGRES_CONTAINER_NAME)"
+	@podman rm "$(POSTGRES_CONTAINER_NAME)"
+
+pgstart: pgstop
 	@mkdir -p "$(POSTGRES_VOLUME)"
 	@podman run -d \
 		--name "$(POSTGRES_CONTAINER_NAME)" \
@@ -19,10 +23,6 @@ pgstart:
 		-p $(POSTGRES_PORT):5432 \
 		-v "./$(POSTGRES_VOLUME):/var/lib/postgresql/data" \
 		"$(POSTGRES_IMAGE)"
-
-pgstop:
-	@podman stop "$(POSTGRES_CONTAINER_NAME)"
-	@podman rm "$(POSTGRES_CONTAINER_NAME)"
 
 pgconnect:
 	podman exec -it "$(POSTGRES_CONTAINER_NAME)" psql -U "$(POSTGRES_USER)" -d "$(POSTGRES_DB)"
