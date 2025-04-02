@@ -11,11 +11,11 @@ import (
 	"github.com/mxpadidar/letsgo/internal/domain/types"
 )
 
-func AuthMiddleware(tokenService services.TokenService) Middleware {
+func AuthMiddlewareFactory(tokenService services.TokenService) func(next http.Handler) http.Handler {
 	allowedPaths := []string{"/auth/login", "/auth/signup"}
 
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	middleware := func(next http.Handler) http.Handler {
+		handler := func(w http.ResponseWriter, r *http.Request) {
 			// Allow public routes
 			if slices.Contains(allowedPaths, r.URL.Path) {
 				next.ServeHTTP(w, r)
@@ -39,6 +39,8 @@ func AuthMiddleware(tokenService services.TokenService) Middleware {
 			// Store user in context
 			ctx := context.WithValue(r.Context(), types.AuthUserKey, authUser)
 			next.ServeHTTP(w, r.WithContext(ctx))
-		})
+		}
+		return http.HandlerFunc(handler)
 	}
+	return middleware
 }

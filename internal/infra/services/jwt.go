@@ -21,8 +21,8 @@ type Claims struct {
 	UserRole types.Role
 }
 
-func NewJwtService(secret []byte, ttl int) *JwtService {
-	return &JwtService{secret: secret, ttl: ttl}
+func NewJwtService(secret string, ttl int) *JwtService {
+	return &JwtService{secret: []byte(secret), ttl: ttl}
 }
 
 func (jwtServ *JwtService) Encode(ctx context.Context, user *entities.User) (*types.Token, error) {

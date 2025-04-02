@@ -5,7 +5,9 @@ import (
 
 	"github.com/mxpadidar/letsgo/internal/api/request"
 	"github.com/mxpadidar/letsgo/internal/api/response"
+	apiTypes "github.com/mxpadidar/letsgo/internal/api/types"
 	"github.com/mxpadidar/letsgo/internal/domain/services"
+	"github.com/mxpadidar/letsgo/internal/domain/types"
 )
 
 type UserHandler struct {
@@ -16,9 +18,9 @@ func NewUserHandler(handler *services.UserService) *UserHandler {
 	return &UserHandler{users: handler}
 }
 
-func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /users/me", h.getCurrentUser)
-	mux.HandleFunc("/users", h.listUsers)
+func (h *UserHandler) RegisterRoutes(mux *http.ServeMux, authz apiTypes.Authz) {
+	mux.HandleFunc("GET /users/me", authz(types.PermUserRead, h.getCurrentUser))
+	mux.HandleFunc("/users", authz(types.PermUserAll, h.listUsers))
 }
 
 func (h *UserHandler) getCurrentUser(w http.ResponseWriter, r *http.Request) {
