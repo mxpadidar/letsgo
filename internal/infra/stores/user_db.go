@@ -42,8 +42,7 @@ func (s *UserDBStore) GetByID(ctx context.Context, id int) (*entities.User, erro
 
 	if err := s.db.GetContext(ctx, &user, query, id); err != nil {
 		if err == sql.ErrNoRows {
-			errMsg := fmt.Sprintf("user with id %d not found", id)
-			return nil, errors.NewNotFoundError(errMsg)
+			return nil, errors.NewNotFoundErr("user with id %d not found", id)
 		}
 		log.Printf("unexpected error in UserDBStore.GetByID: %v", err)
 		return nil, err
@@ -59,8 +58,7 @@ func (s *UserDBStore) GetByUsername(ctx context.Context, username string) (*enti
 
 	if err := s.db.GetContext(ctx, &user, query, username); err != nil {
 		if err == sql.ErrNoRows {
-			errMsg := fmt.Sprintf("user with username `%s` not found", username)
-			return nil, errors.NewNotFoundError(errMsg)
+			return nil, errors.NewNotFoundErr("user with username `%s` not found", username)
 		}
 
 		log.Printf("unexpected error in UserDBStore.GetByUsername: %v", err)
@@ -85,8 +83,7 @@ func (s *UserDBStore) List(ctx context.Context, paginate *types.Paginate) ([]*en
 
 	// return error if no valid field was found
 	if !validOrder {
-		errMsg := fmt.Sprintf("invalid order parameter: %s", paginate.Order)
-		return nil, errors.NewValidationError(errMsg)
+		return nil, errors.NewValidationErr("invalid order parameter: %s", paginate.Order)
 	}
 
 	// execute query

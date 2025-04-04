@@ -30,10 +30,11 @@ func Bootstrap() *server.Server {
 	// Initialize Dependencies
 	userStore := stores.NewUserDBStore(db)
 	hashService := infraServices.NewBcryptHash()
-	jwtService := infraServices.NewJwtService(configs.JWTSecret, configs.AccessTokenTTL)
+	jwtService := infraServices.NewJwtService(configs.AccessTokenSecret, configs.RefreshTokenSecret, configs.AccessTokenTTL, configs.RefreshTokenTTL)
 	stdLogService := infraServices.NewStdLogService()
+	permisStore := stores.NewPermitDBStore(db, stdLogService)
 
-	authService := services.NewAuthService(userStore, hashService, jwtService)
+	authService := services.NewAuthService(userStore, permisStore, hashService, jwtService)
 	userService := services.NewUserService(userStore)
 
 	permService := services.NewPermService(

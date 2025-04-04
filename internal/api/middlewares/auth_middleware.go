@@ -12,7 +12,7 @@ import (
 )
 
 func AuthMiddlewareFactory(tokenService services.TokenService) func(next http.Handler) http.Handler {
-	allowedPaths := []string{"/auth/login", "/auth/signup"}
+	allowedPaths := []string{"/auth/signup", "/auth/tokens/issue", "/auth/tokens/refresh"}
 
 	middleware := func(next http.Handler) http.Handler {
 		handler := func(w http.ResponseWriter, r *http.Request) {
@@ -30,14 +30,14 @@ func AuthMiddlewareFactory(tokenService services.TokenService) func(next http.Ha
 			}
 
 			// Decode token
-			authUser, err := tokenService.Decode(r.Context(), token)
+			authUser, err := tokenService.DecodeAccessToken(r.Context(), token)
 			if err != nil {
 				response.WriteError(w, err)
 				return
 			}
 
 			// Store user in context
-			ctx := context.WithValue(r.Context(), types.AuthUserKey, authUser)
+			ctx := context.WithValue(r.Context(), types.PermitContextKey, authUser)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 		return http.HandlerFunc(handler)

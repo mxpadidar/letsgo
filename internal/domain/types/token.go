@@ -1,9 +1,10 @@
 package types
 
-type Token struct {
-	Token string `json:"token"`
+type TokenPair struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
-func NewToken(token string) *Token {
-	return &Token{Token: token}
+func NewTokenPair(access, refresh string) *TokenPair {
+	return &TokenPair{AccessToken: access, RefreshToken: refresh}
 }

@@ -18,25 +18,10 @@ func NewAuthHandler(service *services.AuthService) *AuthHandler {
 }
 
 func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/auth/login", h.login)
-	mux.HandleFunc("/auth/signup", h.signup)
-}
-
-func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
-	cmd := &commands.LoginCommand{}
-	ctx, err := request.ParseRequestBody(r, cmd)
-	if err != nil {
-		response.WriteError(w, err)
-		return
-	}
-
-	if token, err := h.auth.Login(ctx, cmd); err != nil {
-		response.WriteError(w, err)
-		return
-	} else {
-		response.WriteJSON(w, http.StatusOK, token)
-	}
-
+	mux.HandleFunc("POST /auth/signup", h.signup)
+	mux.HandleFunc("POST /auth/tokens/issue", h.issueTokens)
+	mux.HandleFunc("POST /auth/tokens/refresh", h.refreshTokens)
+	mux.HandleFunc("DELETE /auth/tokens/revoke", h.revokeTokens)
 }
 
 func (h *AuthHandler) signup(w http.ResponseWriter, r *http.Request) {
@@ -53,5 +38,45 @@ func (h *AuthHandler) signup(w http.ResponseWriter, r *http.Request) {
 	} else {
 		response.WriteJSON(w, http.StatusOK, user)
 	}
+}
 
+func (h *AuthHandler) issueTokens(w http.ResponseWriter, r *http.Request) {
+	cmd := &commands.CreatePermitCmd{}
+	ctx, err := request.ParseRequestBody(r, cmd)
+	if err != nil {
+		response.WriteError(w, err)
+		return
+	}
+
+	if token, err := h.auth.CreatePermit(ctx, cmd); err != nil {
+		response.WriteError(w, err)
+		return
+	} else {
+		response.WriteJSON(w, http.StatusOK, token)
+	}
+}
+
+func (h *AuthHandler) refreshTokens(w http.ResponseWriter, r *http.Request) {
+	cmd := &commands.RotatePermitCmd{}
+	ctx, err := request.ParseRequestBody(r, cmd)
+	if err != nil {
+		response.WriteError(w, err)
+		return
+	}
+
+	if token, err := h.auth.RotatePermit(ctx, cmd); err != nil {
+		response.WriteError(w, err)
+		return
+	} else {
+		response.WriteJSON(w, http.StatusOK, token)
+	}
+}
+
+func (h *AuthHandler) revokeTokens(w http.ResponseWriter, r *http.Request) {
+	if err := h.auth.RevokePermit(r.Context()); err != nil {
+		response.WriteError(w, err)
+		return
+	}
+
+	response.WriteJSON(w, http.StatusNoContent, nil)
 }

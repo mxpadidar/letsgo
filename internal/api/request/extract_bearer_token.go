@@ -13,12 +13,12 @@ func ExtractBearerToken(r *http.Request) (string, error) {
 	bearerToken := r.Header.Get("Authorization")
 
 	if bearerToken == "" {
-		return "", errors.NewAuthFailedError("bearer token missing")
+		return "", errors.AuthErr
 	}
 
 	parts := strings.Split(bearerToken, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		return "", errors.NewAuthFailedError("token format is invalid")
+		return "", errors.AuthErr
 	}
 
 	return parts[1], nil

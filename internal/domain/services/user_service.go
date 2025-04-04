@@ -18,12 +18,12 @@ func NewUserService(userStore stores.UserStore) *UserService {
 }
 
 func (h *UserService) GetCurrentUser(ctx context.Context) (*entities.User, error) {
-	authUser, ok := ctx.Value(types.AuthUserKey).(*types.AuthUser)
+	permit, ok := ctx.Value(types.PermitContextKey).(*entities.Permit)
 	if !ok {
-		return nil, errors.NewAuthFailedError("authentication required")
+		return nil, errors.AuthErr
 	}
 
-	user, err := h.userStore.GetByUsername(ctx, authUser.Username)
+	user, err := h.userStore.GetByID(ctx, permit.UserID)
 	if err != nil {
 		return nil, err
 	}

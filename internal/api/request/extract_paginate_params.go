@@ -1,7 +1,6 @@
 package request
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/mxpadidar/letsgo/internal/domain/errors"
@@ -16,8 +15,7 @@ func ExtractPaginateParams(r *http.Request) (*types.Paginate, error) {
 
 	for key, values := range query {
 		if len(values) > 1 {
-			errMsg := fmt.Sprintf("multiple values for parameter %s", key)
-			return nil, errors.NewValidationError(errMsg)
+			return nil, errors.NewValidationErr("multiple values for parameter %s", key)
 		}
 		params[key] = values[0]
 	}

@@ -22,7 +22,7 @@ func (cmd *SignupCommand) Validate() error {
 	}
 
 	if cmd.Password == "" {
-		return errors.NewValidationError("password is required")
+		return errors.NewValidationErr("password is required")
 	}
 
 	if err := validations.MinMaxValidation("password", cmd.Password, 6, 20); err != nil {

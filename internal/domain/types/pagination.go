@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -21,7 +20,7 @@ func NewPaginateFromMap(params map[string]string) (*Paginate, error) {
 	if param, exists := params["limit"]; exists {
 		limit, err := strconv.Atoi(param)
 		if err != nil {
-			return nil, errors.NewValidationError(fmt.Sprintf("invalid limit value: %v", err))
+			return nil, errors.NewValidationErr("invalid limit value: %v", err)
 		}
 		paginte.Limit = limit
 	}
@@ -29,7 +28,7 @@ func NewPaginateFromMap(params map[string]string) (*Paginate, error) {
 	if param, exists := params["offset"]; exists {
 		offset, err := strconv.Atoi(param)
 		if err != nil {
-			return nil, errors.NewValidationError(fmt.Sprintf("invalid offset value: %v", err))
+			return nil, errors.NewValidationErr("invalid offset value: %v", err)
 		}
 		paginte.Offset = offset
 	}
@@ -37,7 +36,7 @@ func NewPaginateFromMap(params map[string]string) (*Paginate, error) {
 	if param := params["sort"]; param != "" {
 		sort := strings.ToUpper(param)
 		if sort != "ASC" && sort != "DESC" {
-			return nil, errors.NewValidationError(fmt.Sprintf("invalid sort value: %v", sort))
+			return nil, errors.NewValidationErr("invalid sort value: %v", sort)
 		}
 		paginte.Direction = sort
 	}

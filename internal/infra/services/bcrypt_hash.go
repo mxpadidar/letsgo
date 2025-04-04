@@ -16,7 +16,7 @@ func NewBcryptHash() *BcryptHash {
 
 func (a *BcryptHash) Hash(ctx context.Context, raw string) (hashed []byte, err error) {
 	if raw == "" {
-		return nil, errors.NewValidationError("password is required")
+		return nil, errors.NewValidationErr("password is required")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(raw), bcrypt.DefaultCost)
@@ -32,11 +32,11 @@ func (a *BcryptHash) Hash(ctx context.Context, raw string) (hashed []byte, err e
 func (a *BcryptHash) Compare(ctx context.Context, hashed []byte, raw string) error {
 
 	if raw == "" {
-		return errors.NewValidationError("password is required")
+		return errors.NewValidationErr("password is required")
 	}
 
 	if err := bcrypt.CompareHashAndPassword(hashed, []byte(raw)); err != nil {
-		return errors.NewValidationError("password mismatch")
+		return errors.NewValidationErr("password mismatch")
 	}
 
 	return nil

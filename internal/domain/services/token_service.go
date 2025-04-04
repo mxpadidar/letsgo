@@ -8,6 +8,7 @@ import (
 )
 
 type TokenService interface {
-	Encode(ctx context.Context, user *entities.User) (token *types.Token, err error)
-	Decode(ctx context.Context, tokenString string) (user *types.AuthUser, err error)
+	GenerateTokenPair(ctx context.Context, permit *entities.Permit) (*types.TokenPair, error)
+	DecodeRefreshToken(ctx context.Context, tokenString string) (*entities.Permit, error)
+	DecodeAccessToken(ctx context.Context, tokenString string) (*entities.Permit, error)
 }

@@ -20,7 +20,7 @@ func NewUserHandler(handler *services.UserService) *UserHandler {
 
 func (h *UserHandler) RegisterRoutes(mux *http.ServeMux, authz apiTypes.Authz) {
 	mux.HandleFunc("GET /users/me", authz(types.PermUserRead, h.getCurrentUser))
-	mux.HandleFunc("/users", authz(types.PermUserAll, h.listUsers))
+	mux.HandleFunc("GET /users", authz(types.PermUserAll, h.listUsers))
 }
 
 func (h *UserHandler) getCurrentUser(w http.ResponseWriter, r *http.Request) {

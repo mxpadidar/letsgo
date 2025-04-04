@@ -1,19 +1,21 @@
 package bootstrap
 
 import (
-	"fmt"
 	"log"
 
+	"github.com/mxpadidar/letsgo/internal/domain/errors"
 	"github.com/spf13/viper"
 )
 
 // Config holds all application configurations
 type Config struct {
-	PostgresDSN    string `mapstructure:"POSTGRES_DSN"`
-	JWTSecret      string `mapstructure:"JWT_SECRET"`
-	AccessTokenTTL int    `mapstructure:"ACCESS_TOKEN_TTL"`
-	BcryptCost     int    `mapstructure:"BCRYPT_COST"`
-	ServerPort     int    `mapstructure:"SERVER_PORT"`
+	PostgresDSN        string `mapstructure:"POSTGRES_DSN"`
+	AccessTokenSecret  string `mapstructure:"ACCESS_TOKEN_SECRET"`
+	RefreshTokenSecret string `mapstructure:"REFRESH_TOKEN_SECRET"`
+	AccessTokenTTL     int    `mapstructure:"ACCESS_TOKEN_TTL"`
+	RefreshTokenTTL    int    `mapstructure:"REFRESH_TOKEN_TTL"`
+	BcryptCost         int    `mapstructure:"BCRYPT_COST"`
+	ServerPort         int    `mapstructure:"SERVER_PORT"`
 }
 
 // LoadConfig reads environment variables and loads them into Config struct
@@ -28,7 +30,7 @@ func LoadConfig() (*Config, error) {
 
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
+		return nil, errors.InternalErr
 	}
 
 	// Validate required fields
@@ -40,26 +42,32 @@ func LoadConfig() (*Config, error) {
 }
 
 func (config *Config) validate() error {
-	missingFields := []string{}
+	missing := []string{}
 
 	if config.PostgresDSN == "" {
-		missingFields = append(missingFields, "POSTGRES_DSN")
+		missing = append(missing, "POSTGRES_DSN")
 	}
-	if config.JWTSecret == "" {
-		missingFields = append(missingFields, "JWT_SECRET")
+	if config.AccessTokenSecret == "" {
+		missing = append(missing, "ACCESS_TOKEN_SECRET")
+	}
+	if config.RefreshTokenSecret == "" {
+		missing = append(missing, "REFRESH_TOKEN_SECRET")
 	}
 	if config.AccessTokenTTL == 0 {
-		missingFields = append(missingFields, "ACCESS_TOKEN_TTL")
+		missing = append(missing, "ACCESS_TOKEN_TTL")
+	}
+	if config.RefreshTokenTTL == 0 {
+		missing = append(missing, "REFRESH_TOKEN_TTL")
 	}
 	if config.BcryptCost == 0 {
-		missingFields = append(missingFields, "BCRYPT_COST")
+		missing = append(missing, "BCRYPT_COST")
 	}
 	if config.ServerPort == 0 {
-		missingFields = append(missingFields, "SERVER_PORT")
+		missing = append(missing, "SERVER_PORT")
 	}
 
-	if len(missingFields) > 0 {
-		return fmt.Errorf("missing required config fields: %v", missingFields)
+	if len(missing) > 0 {
+		return errors.NewValidationErr("missing configs: %v", missing)
 	}
 	return nil
 }

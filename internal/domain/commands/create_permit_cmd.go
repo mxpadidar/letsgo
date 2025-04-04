@@ -7,12 +7,12 @@ import (
 	"github.com/mxpadidar/letsgo/internal/domain/validations"
 )
 
-type LoginCommand struct {
+type CreatePermitCmd struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-func (cmd *LoginCommand) Validate() error {
+func (cmd *CreatePermitCmd) Validate() error {
 	// update username to lowercase and strip whitespace
 	cmd.Username = strings.ToLower(cmd.Username)
 	cmd.Username = strings.TrimSpace(cmd.Username)
@@ -22,10 +22,10 @@ func (cmd *LoginCommand) Validate() error {
 	}
 
 	if cmd.Password == "" {
-		return errors.NewValidationError("password is required")
+		return errors.NewValidationErr("password is required")
 	}
 
-	if err := validations.MinMaxValidation("password", cmd.Password, 6, 20); err != nil {
+	if err := validations.MinMaxValidation("password", cmd.Password, 5, 20); err != nil {
 		return err
 	}
 

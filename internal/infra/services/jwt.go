@@ -2,80 +2,108 @@ package services
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/mxpadidar/letsgo/internal/domain/entities"
 	"github.com/mxpadidar/letsgo/internal/domain/errors"
 	"github.com/mxpadidar/letsgo/internal/domain/types"
 )
 
 type JwtService struct {
-	secret []byte
-	ttl    int
+	accessSecret  []byte
+	refreshSecret []byte
+	accessTtl     int
+	refreshTtl    int
 }
 
-type Claims struct {
+// subject is permit id
+type CustomClaims struct {
 	jwt.RegisteredClaims
-	UserRole types.Role
+	Role types.Role
 }
 
-func NewJwtService(secret string, ttl int) *JwtService {
-	return &JwtService{secret: []byte(secret), ttl: ttl}
-}
-
-func (jwtServ *JwtService) Encode(ctx context.Context, user *entities.User) (*types.Token, error) {
-	tokenClaims := &Claims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   user.Username,
-			ExpiresAt: jwt.NewNumericDate(jwtServ.getExp()),
-			Issuer:    "letsgo",
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-		UserRole: user.Role,
+func NewJwtService(accessSecret, refreshSecret string, accessTtl, refreshTtl int) *JwtService {
+	return &JwtService{
+		accessSecret:  []byte(accessSecret),
+		refreshSecret: []byte(refreshSecret),
+		accessTtl:     accessTtl,
+		refreshTtl:    refreshTtl,
 	}
+}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, tokenClaims)
-	access, err := token.SignedString(jwtServ.secret)
-	if err != nil {
+func (s *JwtService) GenerateTokenPair(ctx context.Context, permit *entities.Permit) (*types.TokenPair, error) {
+	refreshToken, err := s.generateToken(permit, s.refreshSecret, s.refreshTtl)
+	if err != nil || refreshToken == "" {
 		return nil, err
 	}
 
-	return types.NewToken(access), nil
-}
-
-func (jwtServ *JwtService) Decode(ctx context.Context, tokenString string) (*types.AuthUser, error) {
-	authFieldErr := errors.NewAuthFailedError("authentication field!")
-	if tokenString == "" {
-		return nil, authFieldErr
+	accessToken, err := s.generateToken(permit, s.accessSecret, s.accessTtl)
+	if err != nil || accessToken == "" {
+		return nil, err
 	}
 
-	customClaims := &Claims{}
+	return types.NewTokenPair(accessToken, refreshToken), nil
+}
 
-	token, err := jwt.ParseWithClaims(tokenString, customClaims, func(token *jwt.Token) (interface{}, error) {
+func (jwtServ *JwtService) DecodeAccessToken(ctx context.Context, tokenString string) (*entities.Permit, error) {
+	return jwtServ.decodeToken(tokenString, jwtServ.accessSecret)
+}
+
+func (jwtServ *JwtService) DecodeRefreshToken(ctx context.Context, tokenString string) (*entities.Permit, error) {
+	return jwtServ.decodeToken(tokenString, jwtServ.refreshSecret)
+}
+
+func (jwtServ *JwtService) decodeToken(tokenString string, secret []byte) (*entities.Permit, error) {
+	if tokenString == "" {
+		return nil, errors.AuthErr
+	}
+
+	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			errMsg := fmt.Sprintf("unexpected signing method: %s", token.Header["alg"])
-			return nil, errors.NewInternalError(errMsg)
+			return nil, errors.NewInternalErr("unexpected signing method: %s", token.Header["alg"])
 		}
-		return jwtServ.secret, nil
-	})
+		return secret, nil
+	}
+
+	cc := &CustomClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, cc, keyFunc)
 
 	if err != nil || !token.Valid {
-		return nil, authFieldErr
+		return nil, errors.AuthErr
 	}
 
-	// The claims are already of type *TokenClaims
-	claims, ok := token.Claims.(*Claims)
+	cc, ok := token.Claims.(*CustomClaims)
 	if !ok {
-		return nil, authFieldErr
+		return nil, errors.AuthErr
 	}
 
-	user := types.NewAuthUser(claims.Subject, claims.UserRole)
-	return user, nil
+	jti, err := uuid.Parse(cc.ID)
+	if err != nil {
+		return nil, errors.NewInternalErr("invalid UUID: %s", cc.ID)
+	}
+	userID, err := strconv.Atoi(cc.Subject)
+	if err != nil {
+		return nil, errors.NewInternalErr("invalid user ID: %s", cc.Subject)
+	}
+	return entities.NewPermit(jti, userID, cc.Role, cc.IssuedAt.Time), nil
 }
 
-func (s *JwtService) getExp() time.Time {
-	dur := time.Duration(s.ttl) * time.Second
-	return time.Now().Add(dur)
+func (jwtServ *JwtService) generateToken(permit *entities.Permit, secret []byte, ttl int) (string, error) {
+	now := time.Now()
+	exp := now.Add(time.Duration(ttl) * time.Second)
+	cc := CustomClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        permit.ID.String(),
+			Subject:   strconv.Itoa(permit.UserID),
+			ExpiresAt: jwt.NewNumericDate(exp),
+			IssuedAt:  jwt.NewNumericDate(now),
+		},
+		Role: permit.Role,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, cc)
+	return token.SignedString(secret)
 }

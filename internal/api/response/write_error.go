@@ -12,7 +12,7 @@ func WriteError(w http.ResponseWriter, err error) {
 	appErr, ok := err.(*errors.AppError)
 	if !ok {
 		log.Printf("failed to convert error to AppError: %v", err)
-		appErr = errors.NewInternalError("something goes wrong!")
+		appErr = errors.InternalErr
 	}
 
 	status := getErrStatusCode(appErr)

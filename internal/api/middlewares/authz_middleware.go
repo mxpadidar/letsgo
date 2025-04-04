@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/mxpadidar/letsgo/internal/api/response"
+	"github.com/mxpadidar/letsgo/internal/domain/entities"
 	"github.com/mxpadidar/letsgo/internal/domain/errors"
 	"github.com/mxpadidar/letsgo/internal/domain/services"
 	"github.com/mxpadidar/letsgo/internal/domain/types"
@@ -14,15 +15,15 @@ func AuthzMiddlewareFactory(permService *services.PermService) func(types.Permis
 	accessControl := func(perm types.Permission, next http.HandlerFunc) http.HandlerFunc {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			// Extract user from context
-			authUser, ok := r.Context().Value(types.AuthUserKey).(*types.AuthUser)
-			if !ok || authUser == nil {
-				response.WriteError(w, errors.NewAuthFailedError("authentication failed"))
+			permit, ok := r.Context().Value(types.PermitContextKey).(*entities.Permit)
+			if !ok || permit == nil {
+				response.WriteError(w, errors.AuthErr)
 				return
 			}
 
 			// Check if the user has the required permission
-			if !permService.CheckPerm(authUser.Role, perm) {
-				response.WriteError(w, errors.NewAccessDeniedError("access denied"))
+			if !permService.CheckPerm(permit.Role, perm) {
+				response.WriteError(w, errors.AccessErr)
 				return
 			}
 
