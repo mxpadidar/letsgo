@@ -7,11 +7,11 @@ import (
 
 	"github.com/mxpadidar/letsgo/internal/api/request"
 	"github.com/mxpadidar/letsgo/internal/api/response"
-	"github.com/mxpadidar/letsgo/internal/domain/services"
-	"github.com/mxpadidar/letsgo/internal/domain/types"
+	"github.com/mxpadidar/letsgo/internal/core/services"
+	"github.com/mxpadidar/letsgo/internal/core/types"
 )
 
-func AuthMiddlewareFactory(tokenService services.TokenService) func(next http.Handler) http.Handler {
+func AuthMiddlewareFactory(tokenService services.TokenService, logger services.LogService) func(next http.Handler) http.Handler {
 	allowedPaths := []string{"/auth/signup", "/auth/tokens/issue", "/auth/tokens/refresh"}
 
 	middleware := func(next http.Handler) http.Handler {
@@ -25,14 +25,14 @@ func AuthMiddlewareFactory(tokenService services.TokenService) func(next http.Ha
 			// Extract token
 			token, err := request.ExtractBearerToken(r)
 			if err != nil {
-				response.WriteError(w, err)
+				response.WriteError(w, logger, err)
 				return
 			}
 
 			// Decode token
 			authUser, err := tokenService.DecodeAccessToken(r.Context(), token)
 			if err != nil {
-				response.WriteError(w, err)
+				response.WriteError(w, logger, err)
 				return
 			}
 

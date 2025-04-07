@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mxpadidar/letsgo/internal/domain/errors"
+	"github.com/mxpadidar/letsgo/internal/core/errors"
 )
 
 type validable interface {

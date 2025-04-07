@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mxpadidar/letsgo/internal/domain/errors"
+	"github.com/mxpadidar/letsgo/internal/core/errors"
 )
 
 // ExtractBearerToken extracts the Bearer token from the Authorization header.

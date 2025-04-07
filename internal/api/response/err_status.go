@@ -3,7 +3,7 @@ package response
 import (
 	"net/http"
 
-	"github.com/mxpadidar/letsgo/internal/domain/errors"
+	"github.com/mxpadidar/letsgo/internal/core/errors"
 )
 
 func getErrStatusCode(err *errors.AppError) int {

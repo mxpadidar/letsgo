@@ -1,9 +1,8 @@
 package bootstrap
 
 import (
-	"log"
-
-	"github.com/mxpadidar/letsgo/internal/domain/errors"
+	"github.com/mxpadidar/letsgo/internal/core/errors"
+	"github.com/mxpadidar/letsgo/internal/core/services"
 	"github.com/spf13/viper"
 )
 
@@ -19,13 +18,13 @@ type Config struct {
 }
 
 // LoadConfig reads environment variables and loads them into Config struct
-func LoadConfig() (*Config, error) {
+func LoadConfig(logger services.LogService) (*Config, error) {
 	viper.SetConfigFile(".env") // Load from .env file
 	viper.AutomaticEnv()        // Override with system environment variables
 
 	// Try reading the .env file (ignore error if missing)
 	if err := viper.ReadInConfig(); err != nil {
-		log.Println("No .env file found, using system environment variables")
+		logger.Errorf("No .env file found, using system environment variables")
 	}
 
 	var config Config

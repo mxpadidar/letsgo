@@ -3,8 +3,8 @@ package request
 import (
 	"net/http"
 
-	"github.com/mxpadidar/letsgo/internal/domain/errors"
-	"github.com/mxpadidar/letsgo/internal/domain/types"
+	"github.com/mxpadidar/letsgo/internal/core/errors"
+	"github.com/mxpadidar/letsgo/internal/core/types"
 )
 
 // ExtractPaginateParams extracts pagination parameters from an HTTP request.

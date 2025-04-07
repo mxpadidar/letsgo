@@ -2,16 +2,16 @@ package response
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
-	"github.com/mxpadidar/letsgo/internal/domain/errors"
+	"github.com/mxpadidar/letsgo/internal/core/errors"
+	"github.com/mxpadidar/letsgo/internal/core/services"
 )
 
-func WriteError(w http.ResponseWriter, err error) {
+func WriteError(w http.ResponseWriter, logger services.LogService, err error) {
 	appErr, ok := err.(*errors.AppError)
 	if !ok {
-		log.Printf("failed to convert error to AppError: %v", err)
+		logger.Errorf("failed to convert error to AppError: %v", err)
 		appErr = errors.InternalErr
 	}
 
@@ -22,6 +22,7 @@ func WriteError(w http.ResponseWriter, err error) {
 	w.WriteHeader(status)
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		log.Printf("failed to write error response: %v", err)
+		logger.Errorf("failed to write error response: %v", err)
+
 	}
 }

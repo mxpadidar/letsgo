@@ -7,16 +7,16 @@ import (
 	"github.com/mxpadidar/letsgo/internal/api/handlers"
 	"github.com/mxpadidar/letsgo/internal/api/middlewares"
 	"github.com/mxpadidar/letsgo/internal/api/server"
-	"github.com/mxpadidar/letsgo/internal/domain/services"
-	"github.com/mxpadidar/letsgo/internal/domain/types"
-	infraServices "github.com/mxpadidar/letsgo/internal/infra/services"
-	"github.com/mxpadidar/letsgo/internal/infra/stores"
+	"github.com/mxpadidar/letsgo/internal/core/services"
+	"github.com/mxpadidar/letsgo/internal/core/types"
+	"github.com/mxpadidar/letsgo/internal/infrastructure/adapters"
 )
 
 // Bootstrap initializes and returns the server
 func Bootstrap() *server.Server {
 	// Load Config
-	configs, err := LoadConfig()
+	logger := adapters.NewSlogLogger()
+	configs, err := LoadConfig(logger)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,14 +28,13 @@ func Bootstrap() *server.Server {
 	}
 
 	// Initialize Dependencies
-	userStore := stores.NewUserDBStore(db)
-	hashService := infraServices.NewBcryptHash()
-	jwtService := infraServices.NewJwtService(configs.AccessTokenSecret, configs.RefreshTokenSecret, configs.AccessTokenTTL, configs.RefreshTokenTTL)
-	stdLogService := infraServices.NewStdLogService()
-	permisStore := stores.NewPermitDBStore(db, stdLogService)
+	store := NewStore(db, logger)
 
-	authService := services.NewAuthService(userStore, permisStore, hashService, jwtService)
-	userService := services.NewUserService(userStore)
+	hashService := adapters.NewBcryptHash(logger)
+	jwtService := adapters.NewJwtService(configs.AccessTokenSecret, configs.RefreshTokenSecret, configs.AccessTokenTTL, configs.RefreshTokenTTL)
+
+	authService := services.NewAuthService(logger, store.Users, store.Permits, hashService, jwtService)
+	userService := services.NewUserService(logger, store.Users)
 
 	permService := services.NewPermService(
 		services.RolePermsMap{
@@ -43,17 +42,17 @@ func Bootstrap() *server.Server {
 			types.RoleMember: types.PermUserRead,
 			types.RoleGuest:  types.PermUserRead,
 		},
-		stdLogService,
+		logger,
 	)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
 
 	// Initialize Middlewares
-	logMw := middlewares.LogMiddlewareFactory(stdLogService)
-	authMw := middlewares.AuthMiddlewareFactory(jwtService)
-	authzMw := middlewares.AuthzMiddlewareFactory(permService)
+	logMw := middlewares.LogMiddlewareFactory(logger)
+	authMw := middlewares.AuthMiddlewareFactory(jwtService, logger)
+	authzMw := middlewares.AuthzMiddlewareFactory(permService, logger)
 
 	// Create Server
-	return server.NewServer(authHandler, userHandler, authzMw, logMw, authMw)
+	return server.NewServer(logger, authHandler, userHandler, authzMw, logMw, authMw)
 }
